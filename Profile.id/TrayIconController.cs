@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -16,17 +16,22 @@ namespace Profile.id
 
         public const string AwsProfileEnvironmentVariable = "AWS_PROFILE";
 
+        private List<ProfileSettings> _profileSettings;
+
+        private SettingsForm _settingsFormForm;
+
         public TrayIconController()
         {
+            _profileSettings = ProfileSettingsRepository.GetProfileSettings(ProfileSettingsRepository.DefaultSettingsLocation);
             var (target, activeProfileName) = GetActiveProfile();
             var tooltip = GetActiveProfileTooltip(target, activeProfileName);
 
             var contextMenu = GetContextMenu(activeProfileName);
-            
+            var icon = GetMenuIcon(_profileSettings, activeProfileName);
 
             _trayIcon = new NotifyIcon
             {
-                Icon = Resources.AwsIcon,
+                Icon = icon,
                 ContextMenu = contextMenu,
                 BalloonTipText = tooltip,
                 Text = tooltip,
@@ -42,6 +47,12 @@ namespace Profile.id
             _trayIcon.Visible = false;
             Task.WaitAll(_tasks.ToArray());
             Application.Exit();
+        }
+
+        public void OpenSettings(object sender, EventArgs e)
+        {
+            _settingsFormForm = new SettingsForm();
+            _settingsFormForm.Show();
         }
 
         public void ChangeProfile(object sender, EventArgs e)
@@ -68,11 +79,24 @@ namespace Profile.id
 
         public void MouseClick(object sender, MouseEventArgs e)
         {
-            var (target, profileName) = GetActiveProfile();
+            var (_, profileName) = GetActiveProfile();
             foreach (MenuItem menuItem in _trayIcon.ContextMenu.MenuItems)
             {
                 menuItem.Checked = profileName == menuItem.Text;
             }
+        }
+
+        private Icon GetMenuIcon(List<ProfileSettings> profileSettings, string activeProfileName)
+        {
+            foreach (var profileSetting in profileSettings)
+            {
+                if (profileSetting.ProfileName == activeProfileName)
+                {
+                    return IconStylizer.ChangeColor(Resources.AwsIcon, profileSetting.Color);
+                }
+            }
+
+            return Resources.AwsIcon;
         }
 
         private ContextMenu GetContextMenu(string activeProfileName)
@@ -93,6 +117,7 @@ namespace Profile.id
 
             menuItems.AddRange(profileItems);
             menuItems.Add(new MenuItem("-"));
+            menuItems.Add(new MenuItem("SettingsForm", OpenSettings));
             menuItems.Add(new MenuItem("Exit", Exit));
 
             var contextMenu = new ContextMenu(menuItems.ToArray());

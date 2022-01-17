@@ -13,15 +13,31 @@ namespace Profile.id
         public string ProfileName { get; set; }
 
         public Color Color { get; set; }
+
+        public ProfileSettings()
+        {
+
+        }
+
+        public ProfileSettings(string profileName, Color color) : this()
+        {
+            ProfileName = profileName;
+            Color = color;
+        }
     }
 
     public static class ProfileSettingsRepository
     {
         public static string DefaultSettingsLocation => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ProfileId", "settings.csv");
         
-        public static List<ProfileSettings> GetProfileSettings(string settingsLocation)
+        public static List<ProfileSettings> GetProfileSettings(string settingsLocation = null)
         {
             var profileSettingsList = new List<ProfileSettings>();
+
+            if (settingsLocation == null)
+            {
+                settingsLocation = DefaultSettingsLocation;
+            }
 
             var fileExists = File.Exists(settingsLocation);
             if (!fileExists)
@@ -50,9 +66,27 @@ namespace Profile.id
             return profileSettingsList;
         }
 
-        public static void SaveProfileSettings(List<ProfileSettings> profileSettingsList, string settingsLocation)
+        public static void SaveProfileSettings(List<ProfileSettings> profileSettingsList, string settingsLocation = null)
         {
-            var lines = profileSettingsList.Select(p => $"{p.ProfileName},{p.Color}");
+            if (settingsLocation == null)
+            {
+                settingsLocation = DefaultSettingsLocation;
+            }
+
+            var lines = profileSettingsList.Select(p => $"{p.ProfileName},{p.Color.ToKnownColor()}");
+
+            var directory = Path.GetDirectoryName(settingsLocation);
+            if (directory == null)
+            {
+                throw new InvalidOperationException($"Unable to extract directory from settings location  Location={settingsLocation}");
+            }
+
+            var directoryExists = Directory.Exists(directory);
+            if (!directoryExists)
+            {
+                Directory.CreateDirectory(directory);
+            }
+
             File.WriteAllLines(settingsLocation, lines);
         }
     }

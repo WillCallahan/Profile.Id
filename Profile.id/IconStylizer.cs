@@ -15,9 +15,11 @@ namespace Profile.id
     {
         private const int ThicknessDivisor = 5;
 
+        public static readonly KnownColor TransparentColor = Color.Snow.ToKnownColor();
+
         private static Icon ConvertToIcon(Bitmap bitmap)
         {
-            bitmap.MakeTransparent(Color.Snow);
+            bitmap.MakeTransparent(Color.FromKnownColor(TransparentColor));
             var icH = bitmap.GetHicon();
             var icon = Icon.FromHandle(icH);
             return icon;

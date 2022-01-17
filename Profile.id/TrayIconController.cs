@@ -51,7 +51,7 @@ namespace Profile.id
 
         public void OpenSettings(object sender, EventArgs e)
         {
-            _settingsFormForm = new SettingsForm();
+            _settingsFormForm = new SettingsForm(OnChangedProfileSettings);
             _settingsFormForm.Show();
         }
 
@@ -86,6 +86,14 @@ namespace Profile.id
             }
         }
 
+        private void OnChangedProfileSettings(List<ProfileSettings> profileSettingsList)
+        {
+            _profileSettings = profileSettingsList;
+            var (_, profileName) = GetActiveProfile();
+            var icon = GetMenuIcon(_profileSettings, profileName);
+            _trayIcon.Icon = icon;
+        }
+
         private Icon GetMenuIcon(List<ProfileSettings> profileSettings, string activeProfileName)
         {
             foreach (var profileSetting in profileSettings)
@@ -117,7 +125,7 @@ namespace Profile.id
 
             menuItems.AddRange(profileItems);
             menuItems.Add(new MenuItem("-"));
-            menuItems.Add(new MenuItem("SettingsForm", OpenSettings));
+            menuItems.Add(new MenuItem("Settings", OpenSettings));
             menuItems.Add(new MenuItem("Exit", Exit));
 
             var contextMenu = new ContextMenu(menuItems.ToArray());

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Profile.id
@@ -14,9 +11,17 @@ namespace Profile.id
         [STAThread]
         static void Main()
         {
+            AddExceptionHandlers();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new TrayIconController());
+        }
+
+        private static void AddExceptionHandlers()
+        {
+            Application.ThreadException += ErrorHandler.OnThreadException;
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            AppDomain.CurrentDomain.UnhandledException += ErrorHandler.OnUnhandledException;
         }
     }
 }

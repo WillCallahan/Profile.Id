@@ -23,20 +23,9 @@ namespace Profile.id
         public TrayIconController()
         {
             _profileSettings = ProfileSettingsRepository.GetProfileSettings(ProfileSettingsRepository.DefaultSettingsLocation);
-            var (target, activeProfileName) = GetActiveProfile();
-            var tooltip = GetActiveProfileTooltip(target, activeProfileName);
+            _trayIcon = new NotifyIcon();
 
-            var contextMenu = GetContextMenu(activeProfileName);
-            var icon = GetMenuIcon(_profileSettings, activeProfileName);
-
-            _trayIcon = new NotifyIcon
-            {
-                Icon = icon,
-                ContextMenu = contextMenu,
-                BalloonTipText = tooltip,
-                Text = tooltip,
-                Visible = true
-            };
+            UpdateTrayIcon();
 
             _trayIcon.MouseMove += MouseHover;
             _trayIcon.MouseDown += MouseClick;
@@ -55,12 +44,22 @@ namespace Profile.id
             _settingsFormForm.Show();
         }
 
+        public void RefreshAll(object sender, EventArgs e)
+        {
+            _profileSettings = ProfileSettingsRepository.GetProfileSettings(ProfileSettingsRepository.DefaultSettingsLocation);
+            UpdateTrayIcon();
+        }
+
         public void ChangeProfile(object sender, EventArgs e)
         {
             if (sender is MenuItem menuItem)
             {
                 var newProfileName = menuItem.Text;
-                var task = Task.Run(() => Environment.SetEnvironmentVariable(AwsProfileEnvironmentVariable, newProfileName, EnvironmentVariableTarget.User));
+                var task = Task.Run(() =>
+                {
+                    Environment.SetEnvironmentVariable(AwsProfileEnvironmentVariable, newProfileName, EnvironmentVariableTarget.User);
+                    UpdateTrayIcon();
+                });
                 _tasks.Add(task);
             }
         }
@@ -94,6 +93,21 @@ namespace Profile.id
             _trayIcon.Icon = icon;
         }
 
+        private void UpdateTrayIcon()
+        {
+            var (target, activeProfileName) = GetActiveProfile();
+            var tooltip = GetActiveProfileTooltip(target, activeProfileName);
+
+            var contextMenu = GetContextMenu(activeProfileName);
+            var icon = GetMenuIcon(_profileSettings, activeProfileName);
+
+            _trayIcon.ContextMenu = contextMenu;
+            _trayIcon.Icon = icon;
+            _trayIcon.BalloonTipText = tooltip;
+            _trayIcon.Text = tooltip;
+            _trayIcon.Visible = true;
+        }
+
         private Icon GetMenuIcon(List<ProfileSettings> profileSettings, string activeProfileName)
         {
             foreach (var profileSetting in profileSettings)
@@ -124,7 +138,12 @@ namespace Profile.id
                 .ToList();
 
             menuItems.AddRange(profileItems);
-            menuItems.Add(new MenuItem("-"));
+
+            if (profileItems.Count > 0)
+            {
+                menuItems.Add(new MenuItem("-"));
+            }
+            menuItems.Add(new MenuItem("Refresh Profiles", RefreshAll));
             menuItems.Add(new MenuItem("Settings", OpenSettings));
             menuItems.Add(new MenuItem("Exit", Exit));
 

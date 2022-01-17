@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Profile.id
 {
@@ -23,6 +20,13 @@ namespace Profile.id
             {
                 credentialsFilePath = GetDefaultCredentialsFilePath();
             }
+
+            var credentialsFileExists = File.Exists(credentialsFilePath);
+            if (!credentialsFileExists)
+            {
+                return new List<string>();
+            }
+
             var profiles = new List<string>();
             var lines = File.ReadAllLines(credentialsFilePath);
             foreach (var line in lines)

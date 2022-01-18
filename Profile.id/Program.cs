@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace Profile.id
@@ -11,10 +12,21 @@ namespace Profile.id
         [STAThread]
         static void Main()
         {
-            AddExceptionHandlers();
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new TrayIconController());
+            using (var mutex = new Mutex(false, "Profile.Id callahanwilliam.com"))
+            {
+                var isInstanceRunning = !mutex.WaitOne(TimeSpan.Zero);
+                if (isInstanceRunning)
+                {
+                    MessageBox.Show("Only one instance may run at a time!", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                AddExceptionHandlers();
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new TrayIconController());
+                mutex.ReleaseMutex();
+            }
         }
 
         private static void AddExceptionHandlers()

@@ -169,12 +169,6 @@ namespace Profile.id
 
         private static (EnvironmentVariableTarget?, string) GetActiveProfile()
         {
-            var processProfileName = Environment.GetEnvironmentVariable(AwsProfileEnvironmentVariable, EnvironmentVariableTarget.Process);
-            if (!string.IsNullOrEmpty(processProfileName))
-            {
-                return (EnvironmentVariableTarget.Process, processProfileName);
-            }
-
             var userProfileName = Environment.GetEnvironmentVariable(AwsProfileEnvironmentVariable, EnvironmentVariableTarget.User);
             if (!string.IsNullOrEmpty(userProfileName))
             {
